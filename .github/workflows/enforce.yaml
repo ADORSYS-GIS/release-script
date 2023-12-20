@@ -1,0 +1,48 @@
+name: Enforce
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Check test file names
+      run: |
+        for file in tests/*; do
+          if [[ $file != *_test.py ]]; then
+            echo "Error: Non-conformant test file name detected: $file"
+            exit 1
+          fi
+        done
+
+  check-commits:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Check commit messages
+      run: |
+        commits=$(git log --format=%B ${{ github.event.before }}..${{ github.event.after }})
+        while read -r line; do
+          if ! [[ $line =~ ^(feat|fix|docs|style|refactor|perf|test|chore)/[0-9]+-.*$ ]]; then
+            echo "Error: Non-conformant commit message detected: $line"
+            exit 1
+          fi
+        done <<< "$commits"
+
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check branch name
+      run: |
+        branch_name="${{ github.head_ref }}"
+        if ! [[ $branch_name =~ ^(feat|fix|docs|style|refactor|perf|test|chore)/[0-9]+-.*$ ]]; then
+          echo "Error: Non-conformant branch name: $branch_name"
+          exit 1
+        fi
