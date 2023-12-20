@@ -2,56 +2,56 @@ name: Enforce
 
 on:
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   check-tests:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Check test file names
-      run: |
-        for file in test/*; do
-            echo "Checking $file"
-            if [[ $file != *_test.py ]]; then
-                echo "Error: Non-conformant test file name detected: $file"
-                exit 1
-            fi
-        done
+      - name: Check test file names
+        run: |
+          for file in test/*; do
+              echo "Checking $file"
+              if [[ $file != *_test.py ]]; then
+                  echo "Error: Non-conformant test file name detected: $file"
+                  exit 1
+              fi
+          done
 
   check-commits:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Check commit messages
-      run: |
-        if [[ -z "${{ github.event.before }}" || -z "${{ github.event.after }}" ]]; then
-            echo "Commit range not available."
-            exit 1
-        fi
-
-        IFS=$'\n' # Set Internal Field Separator to newline
-        commits_array=($(git log --format=%B ${{ github.event.before }}..${{ github.event.after }} | awk '/./{line=$0} /^$/{print line}'))
-        unset IFS
-
-        for commit_msg in "${commits_array[@]}"; do
-            if ! [[ $commit_msg =~ ^(feat|fix|docs|style|refactor|perf|test|chore)\(.*\):.*$ ]]; then
-                echo "Error: Non-conformant commit message detected: $commit_msg"
-                exit 1
-            fi
-        done
+      - name: Check commit messages
+        run: |
+          if [[ -z "${{ github.event.before }}" || -z "${{ github.event.after }}" ]]; then
+              echo "Commit range not available."
+              exit 0
+          fi
+          
+          IFS=$'\n' # Set Internal Field Separator to newline
+          commits_array=($(git log --format=%B ${{ github.event.before }}..${{ github.event.after }} | awk '/./{line=$0} /^$/{print line}'))
+          unset IFS
+          
+          for commit_msg in "${commits_array[@]}"; do
+              if ! [[ $commit_msg =~ ^(feat|fix|docs|style|refactor|perf|test|chore)\(.*\):.*$ ]]; then
+                  echo "Error: Non-conformant commit message detected: $commit_msg"
+                  exit 1
+              fi
+          done
 
   check-branch-name:
     runs-on: ubuntu-latest
     steps:
-    - name: Check branch name
-      run: |
-        branch_name="${{ github.head_ref }}"
-        if ! [[ $branch_name =~ ^(features|feat|fix|docs|style|refactor|perf|test|chore)/[0-9]+-.*$ ]]; then
-          echo "Error: Non-conformant branch name: $branch_name"
-          exit 1
-        fi
+      - name: Check branch name
+        run: |
+          branch_name="${{ github.head_ref }}"
+          if ! [[ $branch_name =~ ^(features|feat|fix|docs|style|refactor|perf|test|chore)/[0-9]+-.*$ ]]; then
+            echo "Error: Non-conformant branch name: $branch_name"
+            exit 1
+          fi
